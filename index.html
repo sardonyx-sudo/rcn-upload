@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>扶輪公益網 · 物資拍照採集</title>
+  <title>扶輪公益網 · 物資採集與佇列管理</title>
   
   <!-- PWA 標準與 WebAPK 支援 -->
   <link rel="manifest" href="manifest.webmanifest">
@@ -24,9 +24,12 @@
       --primary: #8C6239;         /* 日系焦糖褐 */
       --primary-hover: #75512D;
       --primary-light: #F2EBD9;   /* 溫暖燕麥米 */
-      --accent-green: #0F9D58;    /* 綠色成功/CTA */
+      --accent-green: #0F9D58;    /* 翡翠綠成功/CTA */
       --accent-green-hover: #0B8043;
+      --accent-amber: #92400E;    /* 琥珀金鎖定 */
+      --accent-amber-bg: #FEF3C7;
       --danger: #E22E4C;          /* 緋紅警示 */
+      --danger-hover: #C5223D;
       --bg-page: #F8F5F0;         /* 柔和米白背景 */
       --bg-card: #FFFFFF;
       --text-main: #2C241E;
@@ -59,7 +62,7 @@
     .header {
       background: linear-gradient(135deg, #8C6239 0%, #A27649 100%);
       color: #FFFFFF;
-      padding: 16px 20px;
+      padding: 14px 18px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
       position: sticky;
       top: 0;
@@ -69,13 +72,17 @@
       justify-content: space-between;
     }
 
+    .header-left, .header-right {
+      width: 38px;
+    }
+
     .header-content {
       flex: 1;
       text-align: center;
     }
 
     .header-title {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 700;
       letter-spacing: 0.5px;
       display: flex;
@@ -87,30 +94,81 @@
     .header-sub {
       font-size: 11px;
       color: #F2EBD9;
-      margin-top: 2px;
+      margin-top: 1px;
       font-weight: 400;
     }
 
     .header-btn {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.35);
       color: #FFFFFF;
       border-radius: 50%;
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       font-size: 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .header-btn:active {
-      background: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.38);
+      transform: scale(0.95);
     }
 
-    /* PWA 安裝橫幅 (Android / 電腦) */
+    /* 雙分頁切換列 (Tab Bar) */
+    .tab-nav {
+      background: #FFFFFF;
+      display: flex;
+      border-bottom: 1.5px solid var(--border-color);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+      position: sticky;
+      top: 64px;
+      z-index: 90;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 13px 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-muted);
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      background: rgba(242, 235, 217, 0.35);
+    }
+
+    .tab-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active .tab-badge {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+
+    /* PWA 安裝橫幅 (Android / Chrome) */
     .install-banner {
       background: #FFFBEB;
       border-bottom: 1px solid #FDE68A;
@@ -145,9 +203,24 @@
 
     /* 主容器 */
     .container {
-      max-width: 520px;
+      max-width: 540px;
       margin: 14px auto;
-      padding: 0 16px;
+      padding: 0 14px;
+    }
+
+    /* 頁面切換容器 */
+    .tab-view {
+      display: none;
+      animation: fadeInView 0.2s ease-in-out;
+    }
+
+    .tab-view.active {
+      display: block;
+    }
+
+    @keyframes fadeInView {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* 卡片通用樣式 */
@@ -155,9 +228,10 @@
       background: var(--bg-card);
       border-radius: var(--radius-lg);
       padding: 18px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
       box-shadow: var(--shadow-card);
       border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
     }
 
     .section-header {
@@ -386,6 +460,252 @@
       cursor: not-allowed;
     }
 
+    /* ─────────────────────────────────────────────── */
+    /* 第二分頁：物資佇列樣式 */
+    /* ─────────────────────────────────────────────── */
+    .queue-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding: 2px 4px;
+    }
+
+    .queue-stats {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .queue-stats-badge {
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .btn-refresh {
+      background: #FFFFFF;
+      border: 1.5px solid var(--border-color);
+      color: var(--primary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s ease;
+    }
+
+    .btn-refresh:active {
+      background: var(--primary-light);
+      transform: scale(0.96);
+    }
+
+    /* 佇列卡片 (Queue Card) */
+    .queue-card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-card);
+      border: 1.5px solid var(--border-color);
+      position: relative;
+      transition: all 0.25s ease;
+    }
+
+    /* 刊登中鎖定高亮邊框 */
+    .queue-card.is-locked {
+      border-color: var(--accent-amber);
+      border-width: 2px;
+      background: #FFFAF0;
+      box-shadow: 0 4px 18px rgba(146, 64, 14, 0.15);
+    }
+
+    .card-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .meta-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge-category {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .badge-locked {
+      background: var(--accent-amber);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2.5px 8px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* 上傳者身分 (By：username，無頭像，未填寫時 By：留白) */
+    .meta-uploader {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+
+    .card-title {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+      line-height: 1.35;
+    }
+
+    /* 佇列相片縮圖預覽列 */
+    .card-photos {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .card-thumb {
+      width: 72px;
+      height: 72px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+      background: #F0ECE6;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .card-thumb:active {
+      transform: scale(0.96);
+    }
+
+    .card-detail-item {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: flex-start;
+      gap: 4px;
+      line-height: 1.4;
+    }
+
+    .card-desc-box {
+      background: #FAF8F5;
+      border-radius: var(--radius-sm);
+      padding: 8px 10px;
+      font-size: 12.5px;
+      color: #4A3E35;
+      line-height: 1.45;
+      margin: 8px 0 12px 0;
+      border-left: 3px solid var(--primary-light);
+    }
+
+    /* 卡片操作列 */
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .btn-card-action {
+      flex: 1;
+      padding: 9px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    /* 重新辨識按鈕 */
+    .btn-reprocess {
+      background: #FFFFFF;
+      border: 1.5px solid var(--primary);
+      color: var(--primary);
+    }
+
+    .btn-reprocess:active:not(:disabled) {
+      background: var(--primary-light);
+      transform: scale(0.97);
+    }
+
+    /* 刪除本列按鈕 */
+    .btn-delete {
+      background: #FFFFFF;
+      border: 1.5px solid var(--danger);
+      color: var(--danger);
+    }
+
+    .btn-delete:active:not(:disabled) {
+      background: #FEE2E2;
+      transform: scale(0.97);
+    }
+
+    /* 刊登中 / 處理中 / 冷卻禁點樣式 */
+    .btn-card-action:disabled {
+      background: #EBE6DF !important;
+      border-color: #D8D1C7 !important;
+      color: #9E968D !important;
+      cursor: not-allowed !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    /* 空狀態 (Empty State) */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .empty-sub {
+      font-size: 13px;
+    }
+
     /* 隱藏原生 File Input */
     .file-input-hidden {
       display: none;
@@ -416,10 +736,9 @@
       width: 100%;
       max-width: 400px;
       border-radius: var(--radius-lg);
-      padding: 24px 20px;
-      text-align: center;
+      padding: 22px 18px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-      animation: modalFadeIn 0.25s ease-out;
+      animation: modalFadeIn 0.22s ease-out;
     }
 
     @keyframes modalFadeIn {
@@ -428,30 +747,32 @@
     }
 
     .modal-icon-success {
-      width: 64px;
-      height: 64px;
+      width: 60px;
+      height: 60px;
       background: #E6F4EA;
       color: var(--accent-green);
-      font-size: 34px;
+      font-size: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 14px auto;
+      margin: 0 auto 12px auto;
     }
 
     .modal-title {
-      font-size: 18px;
+      font-size: 17.5px;
       font-weight: 700;
       color: var(--text-main);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      text-align: center;
     }
 
     .modal-desc {
       font-size: 13px;
       color: var(--text-muted);
       line-height: 1.5;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
+      text-align: center;
     }
 
     .modal-btn-primary {
@@ -460,11 +781,12 @@
       color: #FFFFFF;
       border: none;
       border-radius: 24px;
-      padding: 13px;
-      font-size: 15px;
+      padding: 12px;
+      font-size: 14.5px;
       font-weight: 700;
       cursor: pointer;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+      font-family: inherit;
     }
 
     .modal-btn-secondary {
@@ -473,16 +795,71 @@
       color: var(--text-muted);
       border: 1px solid var(--border-color);
       border-radius: 24px;
-      padding: 11px;
-      font-size: 14px;
+      padding: 10px;
+      font-size: 13.5px;
       cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* 燈箱大圖預覽 (Lightbox) */
+    .lightbox-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.88);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+
+    .lightbox-modal.active {
+      display: flex;
+    }
+
+    .lightbox-img {
+      max-width: 95%;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      color: #FFFFFF;
+      font-size: 20px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* 載入中 Spinner */
     .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2.5px solid #FFFFFF;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #FFFFFF;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    .spinner-primary {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--primary);
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
@@ -499,13 +876,13 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: rgba(30, 30, 30, 0.92);
+      background: rgba(35, 30, 25, 0.94);
       color: #FFFFFF;
       padding: 10px 18px;
       border-radius: 24px;
       font-size: 13px;
       box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-      z-index: 2000;
+      z-index: 3000;
       opacity: 0;
       transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
       pointer-events: none;
@@ -522,16 +899,29 @@
 
   <!-- 頂部 Header -->
   <header class="header">
-    <div style="width: 34px;"></div>
+    <div class="header-left"></div>
     <div class="header-content">
       <div class="header-title">
         <span>📦</span>
-        <span>扶輪公益網 · 物資採集</span>
+        <span>扶輪公益網 · 物資助手</span>
       </div>
       <div class="header-sub">外勤隨手拍 ➔ 雲端 AI 自動辨識 ➔ 快速刊登</div>
     </div>
-    <button type="button" class="header-btn" onclick="openSettingsModal()" title="伺服器設定">⚙️</button>
+    <div class="header-right">
+      <button type="button" class="header-btn" onclick="openSettingsModal()" title="偏好設定">⚙️</button>
+    </div>
   </header>
+
+  <!-- 雙分頁切換導航 (Tab Bar) -->
+  <nav class="tab-nav">
+    <button type="button" class="tab-btn active" id="tabBtnCapture" onclick="switchTab('capture')">
+      <span>📸 物資拍照採集</span>
+    </button>
+    <button type="button" class="tab-btn" id="tabBtnQueue" onclick="switchTab('queue')">
+      <span>📋 物資佇列</span>
+      <span class="tab-badge" id="tabQueueBadge">0</span>
+    </button>
+  </nav>
 
   <!-- PWA 安裝橫幅 (Android / Chrome) -->
   <div class="install-banner" id="installBanner">
@@ -541,85 +931,113 @@
 
   <!-- 主容器 -->
   <main class="container">
-    <!-- 1. 相片採集區塊 -->
-    <section class="card">
-      <div class="section-header">
-        <h2 class="section-title">
-          <span>📸 物資相片</span>
-          <span class="badge-count" id="photoCountBadge">0 / 3</span>
-        </h2>
-      </div>
-
-      <div class="photo-slots">
-        <!-- 槽位 1 -->
-        <div class="photo-slot" id="slot1" onclick="triggerFileInput(1)">
-          <div class="slot-icon">📷</div>
-          <div class="slot-label">相片 1</div>
-          <div class="slot-subtext">主要正面</div>
-          <img class="slot-preview" id="preview1" alt="預覽 1">
-          <div class="slot-delete-btn" onclick="removePhoto(event, 1)" title="刪除">✕</div>
+    
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- 第一分頁：物資拍照採集 (Capture) -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="tab-view active" id="viewCapture">
+      <!-- 1. 相片採集區塊 -->
+      <section class="card">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span>📸 物資相片</span>
+            <span class="badge-count" id="photoCountBadge">0 / 3</span>
+          </h2>
         </div>
 
-        <!-- 槽位 2 -->
-        <div class="photo-slot" id="slot2" onclick="triggerFileInput(2)">
-          <div class="slot-icon">📷</div>
-          <div class="slot-label">相片 2</div>
-          <div class="slot-subtext">規格標籤</div>
-          <img class="slot-preview" id="preview2" alt="預覽 2">
-          <div class="slot-delete-btn" onclick="removePhoto(event, 2)" title="刪除">✕</div>
+        <div class="photo-slots">
+          <!-- 槽位 1 -->
+          <div class="photo-slot" id="slot1" onclick="triggerFileInput(1)">
+            <div class="slot-icon">📷</div>
+            <div class="slot-label">相片 1</div>
+            <div class="slot-subtext">主要正面</div>
+            <img class="slot-preview" id="preview1" alt="預覽 1">
+            <div class="slot-delete-btn" onclick="removePhoto(event, 1)" title="刪除">✕</div>
+          </div>
+
+          <!-- 槽位 2 -->
+          <div class="photo-slot" id="slot2" onclick="triggerFileInput(2)">
+            <div class="slot-icon">📷</div>
+            <div class="slot-label">相片 2</div>
+            <div class="slot-subtext">規格標籤</div>
+            <img class="slot-preview" id="preview2" alt="預覽 2">
+            <div class="slot-delete-btn" onclick="removePhoto(event, 2)" title="刪除">✕</div>
+          </div>
+
+          <!-- 槽位 3 -->
+          <div class="photo-slot" id="slot3" onclick="triggerFileInput(3)">
+            <div class="slot-icon">📷</div>
+            <div class="slot-label">相片 3</div>
+            <div class="slot-subtext">局部配件</div>
+            <img class="slot-preview" id="preview3" alt="預覽 3">
+            <div class="slot-delete-btn" onclick="removePhoto(event, 3)" title="刪除">✕</div>
+          </div>
         </div>
 
-        <!-- 槽位 3 -->
-        <div class="photo-slot" id="slot3" onclick="triggerFileInput(3)">
-          <div class="slot-icon">📷</div>
-          <div class="slot-label">相片 3</div>
-          <div class="slot-subtext">局部配件</div>
-          <img class="slot-preview" id="preview3" alt="預覽 3">
-          <div class="slot-delete-btn" onclick="removePhoto(event, 3)" title="刪除">✕</div>
+        <!-- 拍照建議 -->
+        <div class="tips-box">
+          <span>💡</span>
+          <span><b>建議拍照訣竅</b>：第 1 張拍整體外觀、第 2 張拍型號/規格貼紙、第 3 張拍使用痕跡或配件。</span>
         </div>
-      </div>
 
-      <!-- 拍照建議 -->
-      <div class="tips-box">
-        <span>💡</span>
-        <span><b>建議拍照訣竅</b>：第 1 張拍整體外觀、第 2 張拍型號/電氣規格貼紙、第 3 張拍使用痕跡或配件。</span>
-      </div>
+        <!-- 隱藏的 File Inputs (支援相機與相簿) -->
+        <input type="file" id="fileInput1" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 1)">
+        <input type="file" id="fileInput2" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 2)">
+        <input type="file" id="fileInput3" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 3)">
+      </section>
 
-      <!-- 隱藏的 File Inputs (支援相機與相簿) -->
-      <input type="file" id="fileInput1" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 1)">
-      <input type="file" id="fileInput2" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 2)">
-      <input type="file" id="fileInput3" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 3)">
-    </section>
-
-    <!-- 2. 詳細資訊卡片 -->
-    <section class="card">
-      <!-- 所在地址 -->
-      <div class="form-group">
-        <label class="form-label" for="inputAddress">
-          📍 物資所在地址
-          <span class="form-label-desc">(手機將自動記住)</span>
-        </label>
-        <div class="input-wrapper">
-          <input type="text" id="inputAddress" class="form-input" placeholder="例如：台南市安平區永華三街333號6樓" oninput="toggleClearBtn()">
-          <button type="button" class="clear-btn" id="btnClearAddress" onclick="clearAddress()">✕</button>
+      <!-- 2. 詳細資訊卡片 -->
+      <section class="card">
+        <!-- 所在地址 -->
+        <div class="form-group">
+          <label class="form-label" for="inputAddress">
+            📍 物資所在地址
+            <span class="form-label-desc">(手機將自動記住)</span>
+          </label>
+          <div class="input-wrapper">
+            <input type="text" id="inputAddress" class="form-input" placeholder="例如：台南市安平區永華三街333號6樓" oninput="toggleClearBtn()">
+            <button type="button" class="clear-btn" id="btnClearAddress" onclick="clearAddress()">✕</button>
+          </div>
         </div>
+
+        <!-- 補充備註 -->
+        <div class="form-group">
+          <label class="form-label" for="inputNote">
+            📝 物資現況補充說明
+            <span class="form-label-desc">(選填，外觀看不出的細節)</span>
+          </label>
+          <textarea id="inputNote" class="form-textarea" placeholder="例如：功能正常附原廠紙箱、九成新、需自備搬運工具...（支援語音輸入 🎙️）"></textarea>
+        </div>
+
+        <!-- 送出按鈕 -->
+        <button type="button" class="btn-submit" id="btnSubmit" onclick="submitItem()">
+          <span id="btnIcon">🚀</span>
+          <span id="btnText">一鍵上傳並啟動 AI 辨識</span>
+        </button>
+      </section>
+    </div>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- 第二分頁：物資佇列管理 (Queue Management) -->
+    <!-- ══════════════════════════════════════════════ -->
+    <div class="tab-view" id="viewQueue">
+      <!-- 頂部統計與重整 -->
+      <div class="queue-topbar">
+        <div class="queue-stats" id="queueStatsText">
+          待刊登 <span class="queue-stats-badge" id="statsPendingCount">0</span> 筆 ｜ 辨識中 <span class="queue-stats-badge" id="statsProcessingCount">0</span> 筆
+        </div>
+        <button type="button" class="btn-refresh" id="btnRefreshQueue" onclick="loadQueueItems(true)">
+          <span id="refreshIcon">🔄</span>
+          <span>重新整理</span>
+        </button>
       </div>
 
-      <!-- 補充備註 -->
-      <div class="form-group">
-        <label class="form-label" for="inputNote">
-          📝 物資現況補充說明
-          <span class="form-label-desc">(選填，外觀看不出的細節)</span>
-        </label>
-        <textarea id="inputNote" class="form-textarea" placeholder="例如：功能正常附原廠紙箱、九成新、需自備搬運工具...（支援語音輸入 🎙️）"></textarea>
+      <!-- 佇列卡片容器 -->
+      <div id="queueListContainer">
+        <!-- 動態渲染卡片清單 -->
       </div>
+    </div>
 
-      <!-- 送出按鈕 -->
-      <button type="button" class="btn-submit" id="btnSubmit" onclick="submitItem()">
-        <span id="btnIcon">🚀</span>
-        <span id="btnText">一鍵上傳並啟動 AI 辨識</span>
-      </button>
-    </section>
   </main>
 
   <!-- 成功完成彈窗 (Modal) -->
@@ -628,31 +1046,49 @@
       <div class="modal-icon-success">✓</div>
       <h3 class="modal-title">物資登錄成功！</h3>
       <p class="modal-desc" id="successModalDesc">
-        相片已上傳至雲端相片庫，Gemini AI 正在背景排程分析品名與分類！<br>
-        審核人員隨後即可在佇列中一鍵發布。
+        相片已上傳至雲端相片庫，Gemini AI 正在背景排程分析品名與分類！
       </p>
       <button type="button" class="modal-btn-primary" onclick="resetFormForNext()">➕ 繼續拍下一件物資</button>
-      <button type="button" class="modal-btn-secondary" onclick="closeSuccessModal()">關閉</button>
+      <button type="button" class="modal-btn-secondary" onclick="goToQueueTab()">📋 前往物資佇列檢視</button>
     </div>
   </div>
 
-  <!-- 設定 GAS 伺服器彈窗 (Modal) -->
+  <!-- 偏好設定彈窗 (Modal) -->
   <div class="modal-backdrop" id="settingsModal">
     <div class="modal-card" style="text-align: left;">
-      <h3 class="modal-title" style="text-align: center;">⚙️ 伺服器設定</h3>
-      <p class="modal-desc" style="text-align: center; margin-bottom: 14px;">設定您的 Google Apps Script (GAS) 後端網址</p>
+      <h3 class="modal-title">⚙️ 偏好設定</h3>
+      <p class="modal-desc" style="margin-bottom: 14px;">設定您的身分與 Google Apps Script 後端</p>
       
+      <!-- 自訂志工姓名/暱稱 (選填) -->
       <div class="form-group">
-        <label class="form-label">GAS 網頁應用程式網址</label>
-        <input type="url" id="inputGasUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+        <label class="form-label">
+          👤 志工姓名 / 暱稱
+          <span class="form-label-desc">(選填)</span>
+        </label>
+        <input type="text" id="inputUploaderName" class="form-input" placeholder="例如：大安社 王大明">
         <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
-          💡 提示：管理者只要將帶有 <code>?api=網址</code> 的連結分享給志工，即可自動配置免手動填寫！
+          💡 填寫後，上傳的物資卡片將標註「By：您的姓名」；若留空則顯示「By：」。
         </small>
       </div>
 
-      <button type="button" class="modal-btn-primary" onclick="saveSettings()">儲存設定</button>
+      <!-- GAS 網址 -->
+      <div class="form-group" style="margin-top: 14px;">
+        <label class="form-label">GAS 網頁應用程式網址</label>
+        <input type="url" id="inputGasUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+        <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+          💡 提示：管理者只要將帶有 <code>?api=網址</code> 的連結分享給志工，即可自動配置！
+        </small>
+      </div>
+
+      <button type="button" class="modal-btn-primary" style="margin-top: 16px;" onclick="saveSettings()">儲存設定</button>
       <button type="button" class="modal-btn-secondary" onclick="closeSettingsModal()">取消</button>
     </div>
+  </div>
+
+  <!-- 燈箱大圖預覽 (Lightbox) -->
+  <div class="lightbox-modal" id="lightboxModal" onclick="closeLightbox()">
+    <button type="button" class="lightbox-close" onclick="closeLightbox()">✕</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="放大相片">
   </div>
 
   <!-- 吐司通知 Toast -->
@@ -663,12 +1099,14 @@
     // 預設與存儲鍵值
     const STORAGE_KEY_GAS_URL = 'RCN_CAPTURE_GAS_URL';
     const STORAGE_KEY_ADDRESS = 'RCN_CAPTURE_SAVED_ADDRESS';
+    const STORAGE_KEY_UPLOADER = 'RCN_CAPTURE_UPLOADER_NAME';
     
-    // 若管理者想在網頁中寫死預設 GAS 網址，可填入下方雙引號內：
+    // 正式內建 GAS 部署網址 (開箱即用)
     const HARDCODED_DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxmQqWQK44VN-OCoGKM5_0ekS_k-n1iDbXuU_e0L8KYVbppMWCR7iVA_KePH_pltrly/exec";
 
     const photoSlots = [null, null, null];
     let deferredPrompt = null;
+    let isReprocessingGlobal = false; // 全局單工鎖，防止同時多卡片並發打 API
 
     // 1. 註冊 PWA Service Worker (Android WebAPK 關鍵條件)
     if ('serviceWorker' in navigator) {
@@ -707,18 +1145,23 @@
 
     // 3. 頁面初始化
     window.addEventListener('DOMContentLoaded', () => {
-      initGasUrl();
+      initUrlParams();
       loadSavedAddress();
       updateBadge();
+      // 背景悄悄抓取一次佇列數量
+      loadQueueItems(false);
     });
 
-    // 初始化 GAS 網址 (支援 URL query 參數: ?api=https://...)
-    function initGasUrl() {
+    // 讀取 URL 參數 (支援 ?api= 與 ?name= 自動配置)
+    function initUrlParams() {
       const urlParams = new URLSearchParams(window.location.search);
       const apiParam = urlParams.get('api');
       if (apiParam && apiParam.startsWith('http')) {
         localStorage.setItem(STORAGE_KEY_GAS_URL, apiParam.trim());
-        console.log('已從網址參數自動配置 GAS URL:', apiParam);
+      }
+      const nameParam = urlParams.get('name');
+      if (nameParam && nameParam.trim()) {
+        localStorage.setItem(STORAGE_KEY_UPLOADER, nameParam.trim());
       }
     }
 
@@ -726,9 +1169,14 @@
       return localStorage.getItem(STORAGE_KEY_GAS_URL) || HARDCODED_DEFAULT_GAS_URL;
     }
 
+    function getUploaderName() {
+      return (localStorage.getItem(STORAGE_KEY_UPLOADER) || '').trim();
+    }
+
+    // 偏好設定彈窗控制
     function openSettingsModal() {
-      const input = document.getElementById('inputGasUrl');
-      input.value = getGasUrl();
+      document.getElementById('inputGasUrl').value = getGasUrl();
+      document.getElementById('inputUploaderName').value = getUploaderName();
       document.getElementById('settingsModal').classList.add('active');
     }
 
@@ -737,17 +1185,50 @@
     }
 
     function saveSettings() {
-      const val = document.getElementById('inputGasUrl').value.trim();
-      if (val && !val.startsWith('http')) {
+      const gasVal = document.getElementById('inputGasUrl').value.trim();
+      if (gasVal && !gasVal.startsWith('http')) {
         alert('請輸入有效的網址 (需以 https:// 開頭)');
         return;
       }
-      localStorage.setItem(STORAGE_KEY_GAS_URL, val);
+      localStorage.setItem(STORAGE_KEY_GAS_URL, gasVal);
+
+      const nameVal = document.getElementById('inputUploaderName').value.trim();
+      localStorage.setItem(STORAGE_KEY_UPLOADER, nameVal);
+
       closeSettingsModal();
       showToast('✅ 設定已儲存！');
     }
 
-    // 讀取/儲存地址
+    // 雙分頁切換控制
+    function switchTab(tabKey) {
+      const btnCapture = document.getElementById('tabBtnCapture');
+      const btnQueue = document.getElementById('tabBtnQueue');
+      const viewCapture = document.getElementById('viewCapture');
+      const viewQueue = document.getElementById('viewQueue');
+
+      if (tabKey === 'capture') {
+        btnCapture.classList.add('active');
+        btnQueue.classList.remove('active');
+        viewCapture.classList.add('active');
+        viewQueue.classList.remove('active');
+      } else {
+        btnCapture.classList.remove('active');
+        btnQueue.classList.add('active');
+        viewCapture.classList.remove('active');
+        viewQueue.classList.add('active');
+        // 切換到佇列頁時，自動加載最新佇列
+        loadQueueItems(true);
+      }
+    }
+
+    function goToQueueTab() {
+      closeSuccessModal();
+      switchTab('queue');
+    }
+
+    // ───────────────────────────────────────────────
+    // 第一分頁：採集與壓圖相關邏輯
+    // ───────────────────────────────────────────────
     function loadSavedAddress() {
       try {
         const saved = localStorage.getItem(STORAGE_KEY_ADDRESS);
@@ -784,7 +1265,6 @@
       input.focus();
     }
 
-    // 相片卡槽觸發
     function triggerFileInput(slotIndex) {
       const fileInput = document.getElementById(`fileInput${slotIndex}`);
       if (fileInput) {
@@ -837,7 +1317,6 @@
       document.getElementById('photoCountBadge').textContent = `${count} / 3`;
     }
 
-    // 前端 Canvas 極速壓縮引擎
     function compressImage(file, maxDimension, quality) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -877,7 +1356,7 @@
       });
     }
 
-    // 送出採集物資
+    // 上傳採集物資
     async function submitItem() {
       const activePhotos = photoSlots.filter(Boolean);
       if (activePhotos.length === 0) {
@@ -896,6 +1375,7 @@
       const addressInput = document.getElementById('inputAddress');
       const address = addressInput.value.trim();
       const note = document.getElementById('inputNote').value.trim();
+      const uploader = getUploaderName();
 
       if (address) {
         saveAddress(address);
@@ -903,9 +1383,6 @@
 
       setSubmittingState(true, `準備上傳 (${activePhotos.length} 張照片)...`);
 
-      // 💡 重要跨網域密技：
-      // 不指定 headers: { 'Content-Type': 'application/json' }
-      // 瀏覽器將其視為 Simple Request，避免被 GAS 不支援的 OPTIONS Preflight 阻擋！
       try {
         setSubmittingState(true, '傳送至 Google 雲端並觸發 AI...');
         
@@ -913,7 +1390,8 @@
           action: 'uploadItem',
           photos: activePhotos,
           address: address,
-          note: note
+          note: note,
+          uploader: uploader
         });
 
         const response = await fetch(gasUrl, {
@@ -926,6 +1404,8 @@
 
         if (res && res.success) {
           handleSubmitSuccess(res);
+          // 在背景更新佇列數量
+          loadQueueItems(false);
         } else {
           alert(`上傳失敗：${(res && res.error) || '未知錯誤'}`);
         }
@@ -984,6 +1464,311 @@
       showToast('✨ 已為您準備好拍攝下一件物資！');
     }
 
+    // ───────────────────────────────────────────────
+    // 第二分頁：物資佇列管理邏輯
+    // ───────────────────────────────────────────────
+    let currentQueueItems = [];
+
+    // 載入佇列清單 (showToastFlag: 是否在刷新時彈提示)
+    async function loadQueueItems(showToastFlag) {
+      const gasUrl = getGasUrl();
+      if (!gasUrl) return;
+
+      const refreshIcon = document.getElementById('refreshIcon');
+      if (refreshIcon) refreshIcon.classList.add('spinner-primary');
+
+      try {
+        const response = await fetch(gasUrl, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'getItems' })
+        });
+        const res = await response.json();
+
+        if (refreshIcon) refreshIcon.classList.remove('spinner-primary');
+
+        if (res && res.success) {
+          currentQueueItems = res.items || [];
+          const processingCount = res.processingCount || 0;
+          
+          // 更新統計數字
+          document.getElementById('statsPendingCount').textContent = currentQueueItems.length;
+          document.getElementById('statsProcessingCount').textContent = processingCount;
+          document.getElementById('tabQueueBadge').textContent = currentQueueItems.length;
+
+          renderQueueList(currentQueueItems);
+
+          if (showToastFlag) {
+            showToast(`✅ 佇列已更新，共 ${currentQueueItems.length} 筆物資`);
+          }
+        }
+      } catch (err) {
+        if (refreshIcon) refreshIcon.classList.remove('spinner-primary');
+        console.warn('載入佇列失敗:', err);
+        if (showToastFlag) {
+          showToast('連線失敗，請檢查網路或 GAS 網址');
+        }
+      }
+    }
+
+    // 渲染卡片清單
+    function renderQueueList(items) {
+      const container = document.getElementById('queueListContainer');
+      if (!container) return;
+
+      if (!items || items.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <div class="empty-title">目前沒有待刊物資</div>
+            <div class="empty-sub">太棒了！所有物資皆已刊登完成。</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map((item) => {
+        const row = item.row;
+        const status = String(item.status || '').trim();
+        const isLocked = status.includes('刊登中');
+        
+        // 格式化上傳者姓名：若為空或包含預設字樣，顯示 By：(留白)
+        let rawUploader = String(item.uploader || '').trim();
+        let displayUploaderName = '';
+        if (rawUploader && !rawUploader.includes('App') && !rawUploader.includes('採集')) {
+          displayUploaderName = rawUploader;
+        }
+        const byText = `By：${displayUploaderName}`;
+
+        // 分類文字
+        let categoryText = item.category1_name || '未分類';
+        if (item.category2_name) {
+          categoryText += ` ➔ ${item.category2_name}`;
+        }
+
+        // 相片縮圖 (最多 3 張)
+        let thumbsHtml = '';
+        if (item.photos && item.photos.length > 0) {
+          thumbsHtml = `
+            <div class="card-photos">
+              ${item.photos.map(p => `
+                <img class="card-thumb" src="${p.thumbnailUrl || p.originalUrl}" alt="縮圖" 
+                     onclick="openLightbox('${p.originalUrl || p.thumbnailUrl}')" loading="lazy">
+              `).join('')}
+            </div>
+          `;
+        }
+
+        // 新舊與數量
+        const conditionText = (item.condition === 'new') ? '全新未拆' : '二手良品';
+        const qtyText = item.quantity ? `${item.quantity} 件` : '1 件';
+
+        // 鎖定狀態時：按鈕禁用
+        const disabledAttr = isLocked ? 'disabled' : '';
+
+        return `
+          <div class="queue-card ${isLocked ? 'is-locked' : ''}" id="queueCard_${row}">
+            <!-- 頂部資訊列：分類標籤 + 刊登中徽章 + By：username -->
+            <div class="card-meta-row">
+              <div class="meta-left">
+                <span class="badge-category">${escapeHtml(categoryText)}</span>
+                ${isLocked ? '<span class="badge-locked">🔒 刊登中</span>' : ''}
+              </div>
+              <div class="meta-uploader">${escapeHtml(byText)}</div>
+            </div>
+
+            <!-- 品名標題 -->
+            <h3 class="card-title">${escapeHtml(item.title || '（AI 辨識品名整理中）')}</h3>
+
+            <!-- 相片縮圖 -->
+            ${thumbsHtml}
+
+            <!-- 規格與地址細節 -->
+            <div class="card-detail-item">
+              <span>📍</span>
+              <span>${escapeHtml(item.address || '未指定自取地址')}</span>
+            </div>
+            <div class="card-detail-item">
+              <span>📦</span>
+              <span>${conditionText} ｜ 數量：${qtyText}</span>
+            </div>
+
+            <!-- 說明簡述 -->
+            ${item.description ? `
+              <div class="card-desc-box">${escapeHtml(item.description)}</div>
+            ` : ''}
+
+            <!-- 操作按鈕列 (精簡為 2 顆：重新辨識 + 刪除本列) -->
+            <div class="card-actions">
+              <button type="button" class="btn-card-action btn-reprocess" id="btnReprocess_${row}" 
+                      ${disabledAttr} onclick="reprocessSingleItem(${row}, '${escapeJs(item.title || '')}')">
+                <span id="reprocessIcon_${row}">🔄</span>
+                <span id="reprocessText_${row}">重新辨識</span>
+              </button>
+
+              <button type="button" class="btn-card-action btn-delete" id="btnDelete_${row}" 
+                      ${disabledAttr} onclick="deleteSingleItem(${row}, '${escapeJs(item.title || '此物資')}')">
+                <span>🗑️ 刪除本列</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ───────────────────────────────────────────────
+    // 單筆重新辨識 (含 10 秒冷卻倒數 + 全局單工鎖)
+    // ───────────────────────────────────────────────
+    async function reprocessSingleItem(row, title) {
+      if (isReprocessingGlobal) {
+        showToast('⚠️ 目前已有物資正在分析中，請稍候片刻！');
+        return;
+      }
+
+      const gasUrl = getGasUrl();
+      if (!gasUrl) return;
+
+      const btn = document.getElementById(`btnReprocess_${row}`);
+      const btnIcon = document.getElementById(`reprocessIcon_${row}`);
+      const btnText = document.getElementById(`reprocessText_${row}`);
+      if (!btn) return;
+
+      // 啟動全局鎖與按鈕鎖定
+      isReprocessingGlobal = true;
+      btn.disabled = true;
+      btnIcon.innerHTML = '<span class="spinner-primary"></span>';
+      btnText.textContent = '⏳ 分析中...';
+
+      try {
+        const response = await fetch(gasUrl, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'reprocessRow',
+            row: row
+          })
+        });
+        const res = await response.json();
+
+        if (res && res.success) {
+          showToast(`🎉 「${title || '物資'}」已重新辨識完成！`);
+          // 重新整理佇列資料
+          if (res.items) {
+            currentQueueItems = res.items;
+            renderQueueList(currentQueueItems);
+          }
+        } else {
+          alert(`重新辨識失敗：${(res && res.error) || '未知錯誤'}`);
+          btn.disabled = false;
+          btnIcon.innerHTML = '🔄';
+          btnText.textContent = '重新辨識';
+        }
+      } catch (err) {
+        console.error('重辨出錯:', err);
+        alert(`連線伺服器異常：${err.message}`);
+        btn.disabled = false;
+        btnIcon.innerHTML = '🔄';
+        btnText.textContent = '重新辨識';
+      } finally {
+        isReprocessingGlobal = false;
+        // 進入 10 秒冷卻計時
+        startCooldownTimer(row);
+      }
+    }
+
+    // 10 秒冷卻倒數計時器
+    function startCooldownTimer(row) {
+      const btn = document.getElementById(`btnReprocess_${row}`);
+      const btnIcon = document.getElementById(`reprocessIcon_${row}`);
+      const btnText = document.getElementById(`reprocessText_${row}`);
+      if (!btn) return;
+
+      btn.disabled = true;
+      let remainSec = 10;
+      btnIcon.innerHTML = '⏳';
+      btnText.textContent = `冷卻中 (${remainSec}s)`;
+
+      const timer = setInterval(() => {
+        remainSec--;
+        if (remainSec > 0) {
+          btnText.textContent = `冷卻中 (${remainSec}s)`;
+        } else {
+          clearInterval(timer);
+          btn.disabled = false;
+          btnIcon.innerHTML = '🔄';
+          btnText.textContent = '重新辨識';
+        }
+      }, 1000);
+    }
+
+    // ───────────────────────────────────────────────
+    // 單筆刪除本列 (含防呆確認彈窗)
+    // ───────────────────────────────────────────────
+    async function deleteSingleItem(row, title) {
+      const confirmDelete = window.confirm(`確定要刪除「${title}」嗎？\n\n⚠️ 關聯的雲端相片也將同步移至垃圾桶以釋放空間。`);
+      if (!confirmDelete) return;
+
+      const gasUrl = getGasUrl();
+      if (!gasUrl) return;
+
+      const btnDelete = document.getElementById(`btnDelete_${row}`);
+      if (btnDelete) {
+        btnDelete.disabled = true;
+        btnDelete.innerHTML = '<span class="spinner-primary"></span> 刪除中...';
+      }
+
+      try {
+        const response = await fetch(gasUrl, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'deleteItem',
+            row: row
+          })
+        });
+        const res = await response.json();
+
+        if (res && res.success) {
+          showToast(`🗑️ 已刪除「${title}」！`);
+          // 卡片平滑淡出
+          const cardEl = document.getElementById(`queueCard_${row}`);
+          if (cardEl) {
+            cardEl.style.transition = 'all 0.3s ease';
+            cardEl.style.opacity = '0';
+            cardEl.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+              loadQueueItems(false);
+            }, 300);
+          } else {
+            loadQueueItems(false);
+          }
+        } else {
+          alert(`刪除失敗：${(res && res.error) || '未知錯誤'}`);
+          if (btnDelete) {
+            btnDelete.disabled = false;
+            btnDelete.innerHTML = '🗑️ 刪除本列';
+          }
+        }
+      } catch (err) {
+        console.error('刪除出錯:', err);
+        alert(`連線伺服器異常：${err.message}`);
+        if (btnDelete) {
+          btnDelete.disabled = false;
+          btnDelete.innerHTML = '🗑️ 刪除本列';
+        }
+      }
+    }
+
+    // 燈箱大圖控制
+    function openLightbox(url) {
+      if (!url) return;
+      document.getElementById('lightboxImg').src = url;
+      document.getElementById('lightboxModal').classList.add('active');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightboxModal').classList.remove('active');
+      document.getElementById('lightboxImg').src = '';
+    }
+
+    // 氣泡通知 Toast
     let toastTimer = null;
     function showToast(msg) {
       const toast = document.getElementById('toast');
@@ -993,6 +1778,22 @@
       toastTimer = setTimeout(() => {
         toast.classList.remove('show');
       }, 2500);
+    }
+
+    // 輔助防 XSS
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeJs(str) {
+      if (!str) return '';
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '\\"');
     }
   </script>
 </body>
