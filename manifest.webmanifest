@@ -1,0 +1,25 @@
+{
+  "name": "扶輪公益網 · 物資拍照採集",
+  "short_name": "物資採集",
+  "description": "扶輪公益網外勤志工物資隨手拍，AI 自動辨識與快速刊登",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F5F0",
+  "theme_color": "#8C6239",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

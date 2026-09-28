@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>扶輪公益網 · 物資拍照採集</title>
+  
+  <!-- PWA 標準與 WebAPK 支援 -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <meta name="theme-color" content="#8C6239">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="物資採集">
+
+  <!-- Google 字體 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #8C6239;         /* 日系焦糖褐 */
+      --primary-hover: #75512D;
+      --primary-light: #F2EBD9;   /* 溫暖燕麥米 */
+      --accent-green: #0F9D58;    /* 綠色成功/CTA */
+      --accent-green-hover: #0B8043;
+      --danger: #E22E4C;          /* 緋紅警示 */
+      --bg-page: #F8F5F0;         /* 柔和米白背景 */
+      --bg-card: #FFFFFF;
+      --text-main: #2C241E;
+      --text-muted: #736B63;
+      --border-color: #E5DCD1;
+      --border-focus: #8C6239;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --shadow-card: 0 4px 16px rgba(140, 98, 57, 0.08);
+      --shadow-btn: 0 4px 12px rgba(15, 157, 88, 0.28);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 30px;
+    }
+
+    /* 頂部 Header */
+    .header {
+      background: linear-gradient(135deg, #8C6239 0%, #A27649 100%);
+      color: #FFFFFF;
+      padding: 16px 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-content {
+      flex: 1;
+      text-align: center;
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .header-sub {
+      font-size: 11px;
+      color: #F2EBD9;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    .header-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #FFFFFF;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .header-btn:active {
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    /* PWA 安裝橫幅 (Android / 電腦) */
+    .install-banner {
+      background: #FFFBEB;
+      border-bottom: 1px solid #FDE68A;
+      padding: 10px 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .install-banner.show {
+      display: flex;
+    }
+
+    .install-text {
+      font-size: 12px;
+      color: #92400E;
+      font-weight: 500;
+    }
+
+    .install-btn {
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 16px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* 主容器 */
+    .container {
+      max-width: 520px;
+      margin: 14px auto;
+      padding: 0 16px;
+    }
+
+    /* 卡片通用樣式 */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-count {
+      font-size: 12px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    /* 照片卡槽區塊 (3 槽) */
+    .photo-slots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .photo-slot {
+      aspect-ratio: 1 / 1;
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-md);
+      background: #FAF8F5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .photo-slot:active {
+      transform: scale(0.97);
+    }
+
+    .photo-slot.has-image {
+      border-style: solid;
+      border-color: var(--primary);
+      background: #000000;
+    }
+
+    .slot-icon {
+      font-size: 26px;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .slot-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--primary);
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .slot-subtext {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .slot-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    .slot-delete-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 26px;
+      height: 26px;
+      background: var(--danger);
+      color: #FFFFFF;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .photo-slot.has-image .slot-preview,
+    .photo-slot.has-image .slot-delete-btn {
+      display: flex;
+    }
+
+    .photo-slot.has-image .slot-icon,
+    .photo-slot.has-image .slot-label,
+    .photo-slot.has-image .slot-subtext {
+      display: none;
+    }
+
+    /* 拍照技巧提示 */
+    .tips-box {
+      background: var(--primary-light);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--primary);
+      line-height: 1.4;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    /* 表單輸入項 */
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .form-label-desc {
+      font-size: 11px;
+      font-weight: normal;
+      color: var(--text-muted);
+      margin-left: 4px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 14px;
+      color: var(--text-main);
+      background: #FFFFFF;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(140, 98, 57, 0.12);
+    }
+
+    .form-textarea {
+      min-height: 84px;
+      resize: vertical;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 10px;
+      background: transparent;
+      border: none;
+      font-size: 16px;
+      color: var(--text-muted);
+      padding: 4px 6px;
+      cursor: pointer;
+      display: none;
+    }
+
+    /* 底部送出按鈕 */
+    .btn-submit {
+      width: 100%;
+      background: var(--accent-green);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 28px;
+      padding: 15px 20px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      box-shadow: var(--shadow-btn);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+    }
+
+    .btn-submit:active {
+      transform: scale(0.98);
+      background: var(--accent-green-hover);
+    }
+
+    .btn-submit:disabled {
+      background: #A0A0A0;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    /* 隱藏原生 File Input */
+    .file-input-hidden {
+      display: none;
+    }
+
+    /* 彈窗樣式 (Modal) */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 400px;
+      border-radius: var(--radius-lg);
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      animation: modalFadeIn 0.25s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.92) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .modal-icon-success {
+      width: 64px;
+      height: 64px;
+      background: #E6F4EA;
+      color: var(--accent-green);
+      font-size: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px auto;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .modal-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .modal-btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      border-radius: 24px;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    .modal-btn-secondary {
+      width: 100%;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 11px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* 載入中 Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid #FFFFFF;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 吐司通知 Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(30, 30, 30, 0.92);
+      color: #FFFFFF;
+      padding: 10px 18px;
+      border-radius: 24px;
+      font-size: 13px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      z-index: 2000;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部 Header -->
+  <header class="header">
+    <div style="width: 34px;"></div>
+    <div class="header-content">
+      <div class="header-title">
+        <span>📦</span>
+        <span>扶輪公益網 · 物資採集</span>
+      </div>
+      <div class="header-sub">外勤隨手拍 ➔ 雲端 AI 自動辨識 ➔ 快速刊登</div>
+    </div>
+    <button type="button" class="header-btn" onclick="openSettingsModal()" title="伺服器設定">⚙️</button>
+  </header>
+
+  <!-- PWA 安裝橫幅 (Android / Chrome) -->
+  <div class="install-banner" id="installBanner">
+    <span class="install-text">📲 點擊安裝為專屬手機 App，使用更流暢！</span>
+    <button type="button" class="install-btn" id="btnInstallPwa" onclick="triggerPwaInstall()">安裝 App</button>
+  </div>
+
+  <!-- 主容器 -->
+  <main class="container">
+    <!-- 1. 相片採集區塊 -->
+    <section class="card">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span>📸 物資相片</span>
+          <span class="badge-count" id="photoCountBadge">0 / 3</span>
+        </h2>
+      </div>
+
+      <div class="photo-slots">
+        <!-- 槽位 1 -->
+        <div class="photo-slot" id="slot1" onclick="triggerFileInput(1)">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">相片 1</div>
+          <div class="slot-subtext">主要正面</div>
+          <img class="slot-preview" id="preview1" alt="預覽 1">
+          <div class="slot-delete-btn" onclick="removePhoto(event, 1)" title="刪除">✕</div>
+        </div>
+
+        <!-- 槽位 2 -->
+        <div class="photo-slot" id="slot2" onclick="triggerFileInput(2)">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">相片 2</div>
+          <div class="slot-subtext">規格標籤</div>
+          <img class="slot-preview" id="preview2" alt="預覽 2">
+          <div class="slot-delete-btn" onclick="removePhoto(event, 2)" title="刪除">✕</div>
+        </div>
+
+        <!-- 槽位 3 -->
+        <div class="photo-slot" id="slot3" onclick="triggerFileInput(3)">
+          <div class="slot-icon">📷</div>
+          <div class="slot-label">相片 3</div>
+          <div class="slot-subtext">局部配件</div>
+          <img class="slot-preview" id="preview3" alt="預覽 3">
+          <div class="slot-delete-btn" onclick="removePhoto(event, 3)" title="刪除">✕</div>
+        </div>
+      </div>
+
+      <!-- 拍照建議 -->
+      <div class="tips-box">
+        <span>💡</span>
+        <span><b>建議拍照訣竅</b>：第 1 張拍整體外觀、第 2 張拍型號/電氣規格貼紙、第 3 張拍使用痕跡或配件。</span>
+      </div>
+
+      <!-- 隱藏的 File Inputs (支援相機與相簿) -->
+      <input type="file" id="fileInput1" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 1)">
+      <input type="file" id="fileInput2" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 2)">
+      <input type="file" id="fileInput3" class="file-input-hidden" accept="image/*" onchange="handleFileSelected(event, 3)">
+    </section>
+
+    <!-- 2. 詳細資訊卡片 -->
+    <section class="card">
+      <!-- 所在地址 -->
+      <div class="form-group">
+        <label class="form-label" for="inputAddress">
+          📍 物資所在地址
+          <span class="form-label-desc">(手機將自動記住)</span>
+        </label>
+        <div class="input-wrapper">
+          <input type="text" id="inputAddress" class="form-input" placeholder="例如：台南市安平區永華三街333號6樓" oninput="toggleClearBtn()">
+          <button type="button" class="clear-btn" id="btnClearAddress" onclick="clearAddress()">✕</button>
+        </div>
+      </div>
+
+      <!-- 補充備註 -->
+      <div class="form-group">
+        <label class="form-label" for="inputNote">
+          📝 物資現況補充說明
+          <span class="form-label-desc">(選填，外觀看不出的細節)</span>
+        </label>
+        <textarea id="inputNote" class="form-textarea" placeholder="例如：功能正常附原廠紙箱、九成新、需自備搬運工具...（支援語音輸入 🎙️）"></textarea>
+      </div>
+
+      <!-- 送出按鈕 -->
+      <button type="button" class="btn-submit" id="btnSubmit" onclick="submitItem()">
+        <span id="btnIcon">🚀</span>
+        <span id="btnText">一鍵上傳並啟動 AI 辨識</span>
+      </button>
+    </section>
+  </main>
+
+  <!-- 成功完成彈窗 (Modal) -->
+  <div class="modal-backdrop" id="successModal">
+    <div class="modal-card">
+      <div class="modal-icon-success">✓</div>
+      <h3 class="modal-title">物資登錄成功！</h3>
+      <p class="modal-desc" id="successModalDesc">
+        相片已上傳至雲端相片庫，Gemini AI 正在背景排程分析品名與分類！<br>
+        審核人員隨後即可在佇列中一鍵發布。
+      </p>
+      <button type="button" class="modal-btn-primary" onclick="resetFormForNext()">➕ 繼續拍下一件物資</button>
+      <button type="button" class="modal-btn-secondary" onclick="closeSuccessModal()">關閉</button>
+    </div>
+  </div>
+
+  <!-- 設定 GAS 伺服器彈窗 (Modal) -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal-card" style="text-align: left;">
+      <h3 class="modal-title" style="text-align: center;">⚙️ 伺服器設定</h3>
+      <p class="modal-desc" style="text-align: center; margin-bottom: 14px;">設定您的 Google Apps Script (GAS) 後端網址</p>
+      
+      <div class="form-group">
+        <label class="form-label">GAS 網頁應用程式網址</label>
+        <input type="url" id="inputGasUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+        <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">
+          💡 提示：管理者只要將帶有 <code>?api=網址</code> 的連結分享給志工，即可自動配置免手動填寫！
+        </small>
+      </div>
+
+      <button type="button" class="modal-btn-primary" onclick="saveSettings()">儲存設定</button>
+      <button type="button" class="modal-btn-secondary" onclick="closeSettingsModal()">取消</button>
+    </div>
+  </div>
+
+  <!-- 吐司通知 Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- 前端邏輯 -->
+  <script>
+    // 預設與存儲鍵值
+    const STORAGE_KEY_GAS_URL = 'RCN_CAPTURE_GAS_URL';
+    const STORAGE_KEY_ADDRESS = 'RCN_CAPTURE_SAVED_ADDRESS';
+    
+    // 若管理者想在網頁中寫死預設 GAS 網址，可填入下方雙引號內：
+    const HARDCODED_DEFAULT_GAS_URL = "";
+
+    const photoSlots = [null, null, null];
+    let deferredPrompt = null;
+
+    // 1. 註冊 PWA Service Worker (Android WebAPK 關鍵條件)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then((reg) => console.log('PWA Service Worker 註冊成功:', reg.scope))
+          .catch((err) => console.warn('Service Worker 註冊失敗:', err));
+      });
+    }
+
+    // 2. 監聽 PWA 安裝事件 (Android 專用提示)
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.classList.add('show');
+    });
+
+    function triggerPwaInstall() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('使用者接受安裝 PWA');
+          }
+          deferredPrompt = null;
+          document.getElementById('installBanner').classList.remove('show');
+        });
+      }
+    }
+
+    window.addEventListener('appinstalled', () => {
+      document.getElementById('installBanner').classList.remove('show');
+      showToast('🎉 成功安裝物資採集 App！');
+    });
+
+    // 3. 頁面初始化
+    window.addEventListener('DOMContentLoaded', () => {
+      initGasUrl();
+      loadSavedAddress();
+      updateBadge();
+    });
+
+    // 初始化 GAS 網址 (支援 URL query 參數: ?api=https://...)
+    function initGasUrl() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const apiParam = urlParams.get('api');
+      if (apiParam && apiParam.startsWith('http')) {
+        localStorage.setItem(STORAGE_KEY_GAS_URL, apiParam.trim());
+        console.log('已從網址參數自動配置 GAS URL:', apiParam);
+      }
+    }
+
+    function getGasUrl() {
+      return localStorage.getItem(STORAGE_KEY_GAS_URL) || HARDCODED_DEFAULT_GAS_URL;
+    }
+
+    function openSettingsModal() {
+      const input = document.getElementById('inputGasUrl');
+      input.value = getGasUrl();
+      document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function saveSettings() {
+      const val = document.getElementById('inputGasUrl').value.trim();
+      if (val && !val.startsWith('http')) {
+        alert('請輸入有效的網址 (需以 https:// 開頭)');
+        return;
+      }
+      localStorage.setItem(STORAGE_KEY_GAS_URL, val);
+      closeSettingsModal();
+      showToast('✅ 設定已儲存！');
+    }
+
+    // 讀取/儲存地址
+    function loadSavedAddress() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY_ADDRESS);
+        if (saved) {
+          const input = document.getElementById('inputAddress');
+          input.value = saved;
+          toggleClearBtn();
+        }
+      } catch (e) {
+        console.warn('無法讀取 localStorage:', e);
+      }
+    }
+
+    function saveAddress(address) {
+      try {
+        if (address && address.trim()) {
+          localStorage.setItem(STORAGE_KEY_ADDRESS, address.trim());
+        }
+      } catch (e) {
+        console.warn('無法儲存至 localStorage:', e);
+      }
+    }
+
+    function toggleClearBtn() {
+      const input = document.getElementById('inputAddress');
+      const clearBtn = document.getElementById('btnClearAddress');
+      clearBtn.style.display = input.value.trim() ? 'block' : 'none';
+    }
+
+    function clearAddress() {
+      const input = document.getElementById('inputAddress');
+      input.value = '';
+      toggleClearBtn();
+      input.focus();
+    }
+
+    // 相片卡槽觸發
+    function triggerFileInput(slotIndex) {
+      const fileInput = document.getElementById(`fileInput${slotIndex}`);
+      if (fileInput) {
+        fileInput.value = '';
+        fileInput.click();
+      }
+    }
+
+    async function handleFileSelected(event, slotIndex) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      showToast(`正在壓縮相片 ${slotIndex}...`);
+
+      try {
+        const compressedBase64 = await compressImage(file, 1600, 0.82);
+        photoSlots[slotIndex - 1] = compressedBase64;
+
+        const slotEl = document.getElementById(`slot${slotIndex}`);
+        const previewEl = document.getElementById(`preview${slotIndex}`);
+        previewEl.src = `data:image/jpeg;base64,${compressedBase64}`;
+        slotEl.classList.add('has-image');
+
+        updateBadge();
+        showToast(`相片 ${slotIndex} 已備妥！`);
+      } catch (err) {
+        console.error('相片處理失敗:', err);
+        showToast('相片讀取失敗，請重試');
+      }
+    }
+
+    function removePhoto(event, slotIndex) {
+      event.stopPropagation();
+      photoSlots[slotIndex - 1] = null;
+
+      const slotEl = document.getElementById(`slot${slotIndex}`);
+      const previewEl = document.getElementById(`preview${slotIndex}`);
+      previewEl.src = '';
+      slotEl.classList.remove('has-image');
+
+      const fileInput = document.getElementById(`fileInput${slotIndex}`);
+      if (fileInput) fileInput.value = '';
+
+      updateBadge();
+      showToast(`已移除相片 ${slotIndex}`);
+    }
+
+    function updateBadge() {
+      const count = photoSlots.filter(Boolean).length;
+      document.getElementById('photoCountBadge').textContent = `${count} / 3`;
+    }
+
+    // 前端 Canvas 極速壓縮引擎
+    function compressImage(file, maxDimension, quality) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = reject;
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onerror = reject;
+          img.onload = () => {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxDimension) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              }
+            } else {
+              if (height > maxDimension) {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            const base64 = dataUrl.split(',')[1];
+            resolve(base64);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // 送出採集物資
+    async function submitItem() {
+      const activePhotos = photoSlots.filter(Boolean);
+      if (activePhotos.length === 0) {
+        showToast('⚠️ 請至少拍攝或選取一張照片喔！');
+        document.getElementById('slot1').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      const gasUrl = getGasUrl();
+      if (!gasUrl) {
+        alert('尚未設定 Google Apps Script 後端網址！\n請點擊右上角 ⚙️ 設定您的 GAS Web App 網址。');
+        openSettingsModal();
+        return;
+      }
+
+      const addressInput = document.getElementById('inputAddress');
+      const address = addressInput.value.trim();
+      const note = document.getElementById('inputNote').value.trim();
+
+      if (address) {
+        saveAddress(address);
+      }
+
+      setSubmittingState(true, `準備上傳 (${activePhotos.length} 張照片)...`);
+
+      // 💡 重要跨網域密技：
+      // 不指定 headers: { 'Content-Type': 'application/json' }
+      // 瀏覽器將其視為 Simple Request，避免被 GAS 不支援的 OPTIONS Preflight 阻擋！
+      try {
+        setSubmittingState(true, '傳送至 Google 雲端並觸發 AI...');
+        
+        const payload = JSON.stringify({
+          action: 'uploadItem',
+          photos: activePhotos,
+          address: address,
+          note: note
+        });
+
+        const response = await fetch(gasUrl, {
+          method: 'POST',
+          body: payload
+        });
+
+        const res = await response.json();
+        setSubmittingState(false);
+
+        if (res && res.success) {
+          handleSubmitSuccess(res);
+        } else {
+          alert(`上傳失敗：${(res && res.error) || '未知錯誤'}`);
+        }
+      } catch (err) {
+        setSubmittingState(false);
+        console.error('上傳異常:', err);
+        alert(`連線伺服器失敗：${err.message || err}\n請確認右上角 ⚙️ GAS 網址是否正確。`);
+      }
+    }
+
+    function setSubmittingState(isSubmitting, statusText) {
+      const btn = document.getElementById('btnSubmit');
+      const btnIcon = document.getElementById('btnIcon');
+      const btnText = document.getElementById('btnText');
+
+      if (isSubmitting) {
+        btn.disabled = true;
+        btnIcon.innerHTML = '<span class="spinner"></span>';
+        btnText.textContent = statusText || '資料上傳中...';
+      } else {
+        btn.disabled = false;
+        btnIcon.innerHTML = '🚀';
+        btnText.textContent = '一鍵上傳並啟動 AI 辨識';
+      }
+    }
+
+    function handleSubmitSuccess(res) {
+      const modal = document.getElementById('successModal');
+      const descEl = document.getElementById('successModalDesc');
+      if (res && res.message) {
+        descEl.innerHTML = `${res.message}<br><br><span style="color:#8C6239;font-weight:600;">感謝您的愛心付出，審核志工隨後將進行刊登確認！</span>`;
+      }
+      modal.classList.add('active');
+    }
+
+    function closeSuccessModal() {
+      document.getElementById('successModal').classList.remove('active');
+    }
+
+    function resetFormForNext() {
+      closeSuccessModal();
+
+      for (let i = 1; i <= 3; i++) {
+        photoSlots[i - 1] = null;
+        const slotEl = document.getElementById(`slot${i}`);
+        const previewEl = document.getElementById(`preview${i}`);
+        if (previewEl) previewEl.src = '';
+        if (slotEl) slotEl.classList.remove('has-image');
+        const fileInput = document.getElementById(`fileInput${i}`);
+        if (fileInput) fileInput.value = '';
+      }
+
+      document.getElementById('inputNote').value = '';
+      updateBadge();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('✨ 已為您準備好拍攝下一件物資！');
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
