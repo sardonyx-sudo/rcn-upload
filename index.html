@@ -168,7 +168,7 @@
       color: #FFFFFF;
     }
 
-    /* PWA 安裝橫幅 (Android / Chrome) */
+    /* PWA 多系統智慧安裝橫幅 (iOS / Android / Desktop) */
     .install-banner {
       background: #FFFBEB;
       border-bottom: 1px solid #FDE68A;
@@ -183,10 +183,26 @@
       display: flex;
     }
 
+    .install-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+
     .install-text {
       font-size: 12px;
       color: #92400E;
       font-weight: 500;
+      line-height: 1.35;
+    }
+
+    .install-banner-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .install-btn {
@@ -199,6 +215,57 @@
       font-weight: bold;
       cursor: pointer;
       white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .install-btn:active {
+      transform: scale(0.96);
+      background: var(--primary-hover);
+    }
+
+    .install-close-btn {
+      background: transparent;
+      border: none;
+      color: #B45309;
+      font-size: 15px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    /* iOS 安裝步驟指引卡片 */
+    .ios-step-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      background: var(--bg-page);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .ios-step-num {
+      background: var(--primary);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 12px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .ios-step-text {
+      font-size: 12.5px;
+      color: var(--text-main);
+      line-height: 1.45;
     }
 
     /* 主容器 */
@@ -953,10 +1020,16 @@
     </button>
   </nav>
 
-  <!-- PWA 安裝橫幅 (Android / Chrome) -->
+  <!-- PWA 多系統智慧安裝橫幅 (iOS / Android / Desktop) -->
   <div class="install-banner" id="installBanner">
-    <span class="install-text">📲 點擊安裝為專屬手機 App，使用更流暢！</span>
-    <button type="button" class="install-btn" id="btnInstallPwa" onclick="triggerPwaInstall()">安裝 App</button>
+    <div class="install-banner-left">
+      <span style="font-size: 16px;" id="installBannerIcon">📲</span>
+      <span class="install-text" id="installBannerText">點擊安裝為專屬手機 App，使用更流暢！</span>
+    </div>
+    <div class="install-banner-actions">
+      <button type="button" class="install-btn" id="btnInstallPwa" onclick="handlePwaInstallAction()">安裝 App</button>
+      <button type="button" class="install-close-btn" onclick="dismissInstallBanner()" title="關閉提示">✕</button>
+    </div>
   </div>
 
   <!-- 主容器 -->
@@ -1121,6 +1194,41 @@
     <img class="lightbox-img" id="lightboxImg" src="" alt="放大相片">
   </div>
 
+  <!-- iOS Safari 安裝指引彈窗 (Modal) -->
+  <div class="modal-backdrop" id="iosInstallModal">
+    <div class="modal-card" style="text-align: left;">
+      <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+        <span>🍎</span> 加入 iPhone / iPad 主畫面
+      </h3>
+      <p class="modal-desc" style="margin-bottom: 14px;">
+        iOS Safari 需透過分享選單手動加到主畫面，享受全螢幕 App 體驗：
+      </p>
+
+      <div class="ios-step-box">
+        <div class="ios-step-num">1</div>
+        <div class="ios-step-text">
+          點擊 Safari 底部工具列中央的 <strong>「分享」圖示</strong>（方框帶向上箭頭 ⎋ / ⤉）。
+        </div>
+      </div>
+
+      <div class="ios-step-box">
+        <div class="ios-step-num">2</div>
+        <div class="ios-step-text">
+          在分享選單中向下滑動，找到並點選 <strong>「加入主畫面」</strong>（標有 ⊞ 符號）。
+        </div>
+      </div>
+
+      <div class="ios-step-box">
+        <div class="ios-step-num">3</div>
+        <div class="ios-step-text">
+          點擊右上角的 <strong>「新增」</strong>，即可在桌面生成物資採集專屬 App！
+        </div>
+      </div>
+
+      <button type="button" class="modal-btn-primary" style="margin-top: 14px;" onclick="closeIosInstallModal()">我知道了</button>
+    </div>
+  </div>
+
   <!-- 吐司通知 Toast -->
   <div class="toast" id="toast"></div>
 
@@ -1147,15 +1255,91 @@
       });
     }
 
-    // 2. 監聽 PWA 安裝事件 (Android 專用提示)
+    // 2. 智慧偵測使用者的作業系統與安裝環境
+    function detectClientPlatform() {
+      const ua = navigator.userAgent || '';
+      const platform = navigator.platform || '';
+      // 偵測是否已處於 PWA 獨立視窗模式 (Standalone)
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      if (isStandalone) {
+        return { isStandalone: true, os: 'standalone' };
+      }
+
+      // iOS (iPhone / iPad / iPod / iPadOS 桌面模式 MacIntel)
+      const isIOS = /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        return { isStandalone: false, os: 'ios' };
+      }
+
+      // Android
+      if (/Android/i.test(ua)) {
+        return { isStandalone: false, os: 'android' };
+      }
+
+      // 電腦端桌面 (Windows / Mac / Linux / ChromeOS)
+      return { isStandalone: false, os: 'desktop' };
+    }
+
+    // 初始化安裝提示橫幅內容
+    function initInstallBanner() {
+      const client = detectClientPlatform();
+      const banner = document.getElementById('installBanner');
+      if (!banner) return;
+
+      // 如果已經在獨立 App 模式中，或者本次工作階段已關閉過提示，則不顯示
+      if (client.isStandalone || sessionStorage.getItem('rcn_install_banner_dismissed') === '1') {
+        banner.classList.remove('show');
+        return;
+      }
+
+      const iconEl = document.getElementById('installBannerIcon');
+      const textEl = document.getElementById('installBannerText');
+      const btnEl = document.getElementById('btnInstallPwa');
+
+      if (client.os === 'ios') {
+        if (iconEl) iconEl.textContent = '🍎';
+        if (textEl) textEl.textContent = '加入 iPhone/iPad 主畫面，全螢幕採集更順手！';
+        if (btnEl) btnEl.textContent = '安裝教學';
+        banner.classList.add('show');
+      } else if (client.os === 'android') {
+        if (iconEl) iconEl.textContent = '📲';
+        if (textEl) textEl.textContent = '安裝為專屬手機 App，拍照上傳更流暢！';
+        if (btnEl) btnEl.textContent = '安裝 App';
+        // Android 會等待 beforeinstallprompt 觸發後顯示，若已捕獲則立即顯示
+        if (deferredPrompt) {
+          banner.classList.add('show');
+        }
+      } else {
+        // 電腦端 (Windows / Mac 等)
+        if (iconEl) iconEl.textContent = '💻';
+        if (textEl) textEl.textContent = '可安裝為電腦獨立視窗 App，隨點即用！';
+        if (btnEl) btnEl.textContent = '安裝 App';
+        if (deferredPrompt) {
+          banner.classList.add('show');
+        }
+      }
+    }
+
+    // 監聽 PWA 安裝觸發事件 (Android / Chrome / Edge)
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      const banner = document.getElementById('installBanner');
-      if (banner) banner.classList.add('show');
+      const client = detectClientPlatform();
+      if (!client.isStandalone && sessionStorage.getItem('rcn_install_banner_dismissed') !== '1') {
+        const banner = document.getElementById('installBanner');
+        if (banner) banner.classList.add('show');
+      }
     });
 
-    function triggerPwaInstall() {
+    // 處理安裝按鈕點擊
+    function handlePwaInstallAction() {
+      const client = detectClientPlatform();
+      if (client.os === 'ios') {
+        openIosInstallModal();
+        return;
+      }
+
       if (deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then((choiceResult) => {
@@ -1163,13 +1347,39 @@
             console.log('使用者接受安裝 PWA');
           }
           deferredPrompt = null;
-          document.getElementById('installBanner').classList.remove('show');
+          dismissInstallBanner();
         });
+      } else {
+        if (client.os === 'android') {
+          showToast('請點擊瀏覽器選單「⋮」，選擇「加到主畫面」或「安裝應用程式」');
+        } else {
+          showToast('請點擊網址列右側的「安裝」圖示 ⊕ 或選單中的「安裝應用程式」');
+        }
       }
     }
 
+    // 關閉橫幅（本 Session 不再打擾）
+    function dismissInstallBanner() {
+      const banner = document.getElementById('installBanner');
+      if (banner) banner.classList.remove('show');
+      try {
+        sessionStorage.setItem('rcn_install_banner_dismissed', '1');
+      } catch (e) {}
+    }
+
+    // iOS 指引彈窗開關
+    function openIosInstallModal() {
+      const modal = document.getElementById('iosInstallModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeIosInstallModal() {
+      const modal = document.getElementById('iosInstallModal');
+      if (modal) modal.classList.remove('active');
+    }
+
     window.addEventListener('appinstalled', () => {
-      document.getElementById('installBanner').classList.remove('show');
+      dismissInstallBanner();
       showToast('🎉 成功安裝物資採集 App！');
     });
 
@@ -1178,6 +1388,7 @@
       initUrlParams();
       loadSavedAddress();
       updateBadge();
+      initInstallBanner();
       // 背景悄悄抓取一次佇列數量
       loadQueueItems(false);
     });
